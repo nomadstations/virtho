@@ -1,0 +1,145 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+
+const AuthContext = createContext();
+
+export function useAuth() {
+  return useContext(AuthContext);
+}
+
+const MOCK_USER = {
+  id: 'user-1',
+  name: 'Alex Developer',
+  email: 'alex@example.com',
+  avatar: 'https://ui-avatars.com/api/?name=Alex+Developer&background=6366f1&color=fff',
+  role: 'Administrator',
+  memberSince: '2023-01-15',
+  bio: 'Full-stack developer and community builder. Passionate about open source and sustainable tech.'
+};
+
+const INITIAL_DATA = {
+  blogs: [
+    { id: '1', title: 'Getting Started with React', author: 'Alex Developer', date: '2024-03-01', category: 'Tech', image: '', excerpt: 'A quick guide to React.', content: '...' }
+  ],
+  projects: [],
+  events: [],
+  products: [],
+  portfolios: [],
+  teams: [],
+  activities: [
+    { id: '1', text: 'System initialized', timestamp: new Date().toISOString() }
+  ]
+};
+
+export function AuthProvider({ children }) {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { toast } = useToast();
+
+  // State for all CRUD entities
+  const [data, setData] = useState(() => {
+    const stored = localStorage.getItem('virtho_dashboard_data');
+    return stored ? JSON.parse(stored) : INITIAL_DATA;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('virtho_dashboard_data', JSON.stringify(data));
+  }, [data]);
+
+  useEffect(() => {
+    const user = localStorage.getItem('virtho_user');
+    if (user) {
+      setCurrentUser(JSON.parse(user));
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const login = (email, password) => {
+    // Mock login accepts any credentials for prototyping
+    setCurrentUser(MOCK_USER);
+    setIsAuthenticated(true);
+    localStorage.setItem('virtho_user', JSON.stringify(MOCK_USER));
+    toast({ title: 'Welcome back!', description: 'You have successfully logged in.' });
+    return { success: true };
+  };
+
+  const register = (userData) => {
+    const newUser = { ...MOCK_USER, ...userData, id: Date.now().toString() };
+    setCurrentUser(newUser);
+    setIsAuthenticated(true);
+    localStorage.setItem('virtho_user', JSON.stringify(newUser));
+    toast({ title: 'Account created!', description: 'Welcome to the platform.' });
+    return { success: true };
+  };
+
+  const logout = () => {
+    setCurrentUser(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem('virtho_user');
+    toast({ title: 'Logged out', description: 'You have been logged out safely.' });
+  };
+
+  const logActivity = (text) => {
+    setData(prev => ({
+      ...prev,
+      activities: [{ id: Date.now().toString(), text, timestamp: new Date().toISOString() }, ...prev.activities].slice(0, 10)
+    }));
+  };
+
+  // Generic CRUD generator
+  const createCrudMethods = (collectionKey, displayNameField) => ({
+    add: (item) => {
+      setData(prev => ({
+        ...prev,
+        [collectionKey]: [{ id: Date.now().toString(), ...item }, ...prev[collectionKey]]
+      }));
+      logActivity(`Created new ${collectionKey.slice(0, -1)}: ${item[displayNameField]}`);
+    },
+    update: (id, item) => {
+      setData(prev => ({
+        ...prev,
+        [collectionKey]: prev[collectionKey].map(i => i.id === id ? { ...i, ...item } : i)
+      }));
+      logActivity(`Updated ${collectionKey.slice(0, -1)}: ${item[displayNameField]}`);
+    },
+    delete: (id) => {
+      const item = data[collectionKey].find(i => i.id === id);
+      setData(prev => ({
+        ...prev,
+        [collectionKey]: prev[collectionKey].filter(i => i.id !== id)
+      }));
+      if (item) logActivity(`Deleted ${collectionKey.slice(0, -1)}: ${item[displayNameField]}`);
+    }
+  });
+
+  const blogMethods = createCrudMethods('blogs', 'title');
+  const projectMethods = createCrudMethods('projects', 'name');
+  const eventMethods = createCrudMethods('events', 'title');
+  const productMethods = createCrudMethods('products', 'name');
+  const portfolioMethods = createCrudMethods('portfolios', 'title');
+  const teamMethods = createCrudMethods('teams', 'name');
+
+  const value = {
+    currentUser,
+    isAuthenticated,
+    login,
+    register,
+    logout,
+    dashboardData: data,
+    
+    // Blogs
+    addBlog: blogMethods.add, updateBlog: blogMethods.update, deleteBlog: blogMethods.delete,
+    // Projects
+    addProject: projectMethods.add, updateProject: projectMethods.update, deleteProject: projectMethods.delete,
+    // Events
+    addEvent: eventMethods.add, updateEvent: eventMethods.update, deleteEvent: eventMethods.delete,
+    // Products
+    addProduct: productMethods.add, updateProduct: productMethods.update, deleteProduct: productMethods.delete,
+    // Portfolio
+    addPortfolioItem: portfolioMethods.add, updatePortfolioItem: portfolioMethods.update, deletePortfolioItem: portfolioMethods.delete,
+    // Teams
+    addTeam: teamMethods.add, updateTeam: teamMethods.update, deleteTeam: teamMethods.delete,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
