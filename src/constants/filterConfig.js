@@ -1,11 +1,24 @@
+
 export const PROJECT_FILTERS = {
   categories: ['Web Development', 'Mobile App', 'Design', 'Data Science', 'AI/ML', 'Other'],
   statuses: ['active', 'archived']
 };
 
 export const COMMUNITY_FILTERS = {
-  userTypes: ['Human', 'Group', 'Organization'],
-  locations: ['Global', 'North America', 'Europe', 'Asia', 'Africa', 'South America'],
+  userTypes: [
+    { value: 'Human', label: 'People' },
+    { value: 'Group', label: 'Groups' },
+    { value: 'Organization', label: 'Organizations' }
+  ],
+  locations: [
+    'Africa',
+    'Asia',
+    'Australia and Oceania',
+    'Europe',
+    'Global',
+    'North America',
+    'South America'
+  ],
   activityLevels: ['High', 'Medium', 'Low']
 };
 

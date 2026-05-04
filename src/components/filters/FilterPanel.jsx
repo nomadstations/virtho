@@ -1,50 +1,168 @@
+
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 
-// Generic Filter Panel that replaces all the individual filter components
 const FilterPanel = ({ filterConfig, filters, setFilters, clearFilters }) => {
-  const handleArrayFilterChange = (category, value) => {
-    const currentValues = filters[category] || [];
-    const newValues = currentValues.includes(value)
-      ? currentValues.filter((v) => v !== value)
-      : [...currentValues, value];
-    setFilters({ ...filters, [category]: newValues });
+  const handleCheckboxChange = (filterType, value) => {
+    setFilters(prev => {
+      const currentValues = prev[filterType] || [];
+      const newValues = currentValues.includes(value)
+        ? currentValues.filter(v => v !== value)
+        : [...currentValues, value];
+      return { ...prev, [filterType]: newValues };
+    });
   };
 
+  const hasActiveFilters = Object.values(filters).some(arr => arr && arr.length > 0);
+
   return (
-    <div className="space-y-8">
-      {Object.entries(filterConfig).map(([key, config]) => (
-        <div key={key}>
-          <h3 className="text-xs font-semibold text-gray-900 mb-4 capitalize">
-            {key.replace(/([A-Z])/g, ' $1').trim()}
-          </h3>
-          <div className="space-y-3">
-            {config.map((item) => (
-              <div key={item} className="flex items-center space-x-3">
-                <Checkbox 
-                  id={`${key}-${item}`} 
-                  checked={(filters[key] || []).includes(item)}
-                  onCheckedChange={() => handleArrayFilterChange(key, item)}
-                  className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+    <div className="space-y-6">
+      {/* User Types Filter */}
+      {filterConfig.userTypes && (
+        <div>
+          <h3 className="font-semibold text-gray-900 mb-3">User Type</h3>
+          <div className="space-y-2.5">
+            {filterConfig.userTypes.map((type) => {
+              const typeValue = typeof type === 'object' ? type.value : type;
+              const typeLabel = typeof type === 'object' ? type.label : type;
+              
+              return (
+                <div key={typeValue} className="flex items-center space-x-2.5">
+                  <Checkbox
+                    id={`type-${typeValue}`}
+                    checked={filters.userTypes?.includes(typeValue) || false}
+                    onCheckedChange={() => handleCheckboxChange('userTypes', typeValue)}
+                    className="border-gray-300"
+                  />
+                  <Label
+                    htmlFor={`type-${typeValue}`}
+                    className="text-sm text-gray-700 cursor-pointer font-medium"
+                  >
+                    {typeLabel}
+                  </Label>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Locations Filter */}
+      {filterConfig.locations && (
+        <div>
+          <h3 className="font-semibold text-gray-900 mb-3">Location</h3>
+          <div className="space-y-2.5">
+            {filterConfig.locations.map((location) => (
+              <div key={location} className="flex items-center space-x-2.5">
+                <Checkbox
+                  id={`location-${location}`}
+                  checked={filters.locations?.includes(location) || false}
+                  onCheckedChange={() => handleCheckboxChange('locations', location)}
+                  className="border-gray-300"
                 />
-                <Label htmlFor={`${key}-${item}`} className="text-sm font-medium leading-none cursor-pointer">
-                  {item}
+                <Label
+                  htmlFor={`location-${location}`}
+                  className="text-sm text-gray-700 cursor-pointer font-medium"
+                >
+                  {location}
                 </Label>
               </div>
             ))}
           </div>
         </div>
-      ))}
-      
-      <Button 
-        variant="outline" 
-        onClick={clearFilters}
-        className="w-full text-gray-700 border-gray-300 hover:bg-gray-100 font-semibold"
-      >
-        Clear All Filters
-      </Button>
+      )}
+
+      {/* Activity Levels Filter */}
+      {filterConfig.activityLevels && (
+        <div>
+          <h3 className="font-semibold text-gray-900 mb-3">Activity Level</h3>
+          <div className="space-y-2.5">
+            {filterConfig.activityLevels.map((level) => (
+              <div key={level} className="flex items-center space-x-2.5">
+                <Checkbox
+                  id={`activity-${level}`}
+                  checked={filters.activityLevels?.includes(level) || false}
+                  onCheckedChange={() => handleCheckboxChange('activityLevels', level)}
+                  className="border-gray-300"
+                />
+                <Label
+                  htmlFor={`activity-${level}`}
+                  className="text-sm text-gray-700 cursor-pointer font-medium"
+                >
+                  {level}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Categories Filter (for other filter types) */}
+      {filterConfig.categories && (
+        <div>
+          <h3 className="font-semibold text-gray-900 mb-3">Category</h3>
+          <div className="space-y-2.5">
+            {filterConfig.categories.map((category) => (
+              <div key={category} className="flex items-center space-x-2.5">
+                <Checkbox
+                  id={`category-${category}`}
+                  checked={filters.categories?.includes(category) || false}
+                  onCheckedChange={() => handleCheckboxChange('categories', category)}
+                  className="border-gray-300"
+                />
+                <Label
+                  htmlFor={`category-${category}`}
+                  className="text-sm text-gray-700 cursor-pointer font-medium"
+                >
+                  {category}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Statuses Filter (for projects) */}
+      {filterConfig.statuses && (
+        <div>
+          <h3 className="font-semibold text-gray-900 mb-3">Status</h3>
+          <div className="space-y-2.5">
+            {filterConfig.statuses.map((status) => (
+              <div key={status} className="flex items-center space-x-2.5">
+                <Checkbox
+                  id={`status-${status}`}
+                  checked={filters.statuses?.includes(status) || false}
+                  onCheckedChange={() => handleCheckboxChange('statuses', status)}
+                  className="border-gray-300"
+                />
+                <Label
+                  htmlFor={`status-${status}`}
+                  className="text-sm text-gray-700 cursor-pointer font-medium capitalize"
+                >
+                  {status}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Clear Filters Button */}
+      {hasActiveFilters && (
+        <div className="pt-4 border-t border-gray-200">
+          <Button
+            onClick={clearFilters}
+            variant="outline"
+            className="w-full text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-gray-300"
+          >
+            <X className="w-4 h-4 mr-2" />
+            Clear All Filters
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

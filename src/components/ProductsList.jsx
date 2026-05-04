@@ -1,8 +1,14 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Loader2, PackageX } from 'lucide-react';
 import { getProducts, getProductQuantities } from '@/api/EcommerceApi';
 import MarketplaceProductCard from './MarketplaceProductCard';
 import MarketplaceListView from './MarketplaceListView';
+
+// Product image overrides for specific products with missing/broken images
+const PRODUCT_IMAGE_OVERRIDES = {
+  "Professional Camera Kit": "https://horizons-cdn.hostinger.com/dd40932c-3fd8-4239-81a1-2a739c0fce93/f73fb80c539aefd0435afe0e5b9f8725.png"
+};
 
 const ProductsList = ({ 
   searchTerm = '', 
@@ -45,13 +51,18 @@ const ProductsList = ({
           });
         }
 
-        // Add mocked fields for marketplace UI testing
+        // Add mocked fields for marketplace UI testing and apply image overrides
         const enrichedProducts = productsResponse.products.map(product => {
           // Generate deterministic mock data based on ID
           const idNum = product.id ? product.id.charCodeAt(0) : 0;
           const categories = ['Digital', 'Merchandise', 'Services'];
+          
+          // Apply image override if product title matches
+          const overrideImage = PRODUCT_IMAGE_OVERRIDES[product.title];
+          
           return {
             ...product,
+            image: overrideImage || product.image, // Override image if available
             mockRating: (idNum % 2) + 4, // 4 or 5
             mockReviews: (idNum * 3) % 150 + 12,
             mockCategory: categories[idNum % categories.length],

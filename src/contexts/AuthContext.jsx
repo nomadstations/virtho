@@ -11,10 +11,17 @@ const MOCK_USER = {
   id: 'user-1',
   name: 'Alex Developer',
   email: 'alex@example.com',
-  avatar: 'https://ui-avatars.com/api/?name=Alex+Developer&background=6366f1&color=fff',
+  avatar: 'https://ui-avatars.com/api/?name=Alex+Developer&background=6B5B95&color=fff',
   role: 'Administrator',
   memberSince: '2023-01-15',
-  bio: 'Full-stack developer and community builder. Passionate about open source and sustainable tech.'
+  bio: 'Full-stack developer and community builder. Passionate about open source and sustainable tech.',
+  location: '',
+  website: '',
+  socialLinks: {
+    twitter: '',
+    linkedin: '',
+    github: '',
+  },
 };
 
 const INITIAL_DATA = {
@@ -79,6 +86,55 @@ export function AuthProvider({ children }) {
     toast({ title: 'Logged out', description: 'You have been logged out safely.' });
   };
 
+  const updateUserProfile = async (profileData) => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        try {
+          const updatedUser = { ...currentUser, ...profileData };
+          setCurrentUser(updatedUser);
+          localStorage.setItem('virtho_user', JSON.stringify(updatedUser));
+          logActivity(`Updated profile: ${profileData.name}`);
+          resolve({ success: true });
+        } catch (error) {
+          reject(new Error('Failed to update profile'));
+        }
+      }, 1000);
+    });
+  };
+
+  const uploadProfilePicture = async (imageData) => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        try {
+          const updatedUser = { ...currentUser, avatar: imageData };
+          setCurrentUser(updatedUser);
+          localStorage.setItem('virtho_user', JSON.stringify(updatedUser));
+          logActivity('Updated profile picture');
+          resolve({ success: true, imageUrl: imageData });
+        } catch (error) {
+          reject(new Error('Failed to upload profile picture'));
+        }
+      }, 800);
+    });
+  };
+
+  const archiveUserAccount = async () => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        try {
+          logActivity('Account archived');
+          setCurrentUser(null);
+          setIsAuthenticated(false);
+          localStorage.removeItem('virtho_user');
+          localStorage.removeItem('virtho_dashboard_data');
+          resolve({ success: true });
+        } catch (error) {
+          reject(new Error('Failed to archive account'));
+        }
+      }, 1500);
+    });
+  };
+
   const logActivity = (text) => {
     setData(prev => ({
       ...prev,
@@ -125,6 +181,9 @@ export function AuthProvider({ children }) {
     login,
     register,
     logout,
+    updateUserProfile,
+    uploadProfilePicture,
+    archiveUserAccount,
     dashboardData: data,
     
     // Blogs

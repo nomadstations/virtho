@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
@@ -5,8 +6,7 @@ import { motion } from 'framer-motion';
 import { Share2, FolderOpen, Users, Star, Calendar, UserPlus, CheckCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import Breadcrumb from '@/components/Breadcrumb';
-import { getBreadcrumbPaths } from '@/utils/breadcrumbConfig';
+import DashboardBreadcrumb from '@/components/DashboardBreadcrumb';
 import { ROUTES } from '@/constants';
 import { LoadingSpinner } from '@/components/SharedUI';
 
@@ -35,7 +35,11 @@ function ProjectDetailPage() {
     <>
       <Helmet><title>{project.title} - Virtho Projects</title></Helmet>
       <main className="flex-grow container mx-auto px-4 py-8 max-w-6xl">
-        <Breadcrumb paths={[...getBreadcrumbPaths('/project'), { label: project.title, href: '#' }]} />
+        <DashboardBreadcrumb customCrumbs={[
+          { label: 'Dashboard home', path: '/dashboard' },
+          { label: 'Projects', path: '/projects' },
+          { label: project.title, path: `/project/${project.id}` }
+        ]} />
 
         <div className="grid lg:grid-cols-3 gap-8 mb-16">
           <div className="lg:col-span-2 space-y-8">

@@ -20,46 +20,41 @@ module.exports = {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         primary: {
-          default: 'hsl(var(--primary))',
+          DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
         },
         secondary: {
-          default: 'hsl(var(--secondary))',
+          DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))',
         },
         destructive: {
-          default: 'hsl(var(--destructive))',
+          DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
         },
         muted: {
-          default: 'hsl(var(--muted))',
+          DEFAULT: 'hsl(var(--muted))',
           foreground: 'hsl(var(--muted-foreground))',
         },
         accent: {
-          default: 'hsl(var(--accent))',
+          DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))',
         },
         popover: {
-          default: 'hsl(var(--popover))',
+          DEFAULT: 'hsl(var(--popover))',
           foreground: 'hsl(var(--popover-foreground))',
         },
         card: {
-          default: 'hsl(var(--card))',
+          DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-        // Custom Virtho Theme Colors
-        purple: {
-          '50': '#f5f3ff',
-          '100': '#ede9fe',
-          '200': '#ddd6fe',
-          '300': '#c4b5fd',
-          '400': '#a78bfa',
-          '500': '#8b5cf6',
-          '600': '#7c3aed',
-          '700': '#6d28d9',
-          '800': '#5b21b6',
-          '900': '#4c1d95',
-          '950': '#2f1462',
+        // Dark Lavender Theme Colors
+        lavender: {
+          primary: '#6B5B95',
+          light: '#9B8BB3',
+          lighter: '#C4B5D4',
+          lightest: '#E8E3F0',
+          dark: '#4A3F6B',
+          darkest: '#2D2447',
         },
       },
       borderRadius: {

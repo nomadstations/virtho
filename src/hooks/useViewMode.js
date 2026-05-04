@@ -1,13 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 
-export function useViewMode(storageKey = 'app_view_mode', defaultMode = 'grid') {
-  const [viewMode, setViewMode] = useState(() => {
-    return localStorage.getItem(storageKey) || defaultMode;
-  });
+/**
+ * Custom hook for managing view mode state (grid/list toggle)
+ * @param {string} initialMode - Initial view mode ('grid' or 'list')
+ * @returns {Object} View mode state and setter function
+ */
+export function useViewMode(initialMode = 'grid') {
+  // Validate initial mode
+  const validatedInitialMode = initialMode === 'list' ? 'list' : 'grid';
+  
+  const [viewMode, setViewModeState] = useState(validatedInitialMode);
 
-  useEffect(() => {
-    localStorage.setItem(storageKey, viewMode);
-  }, [viewMode, storageKey]);
+  /**
+   * Set view mode with validation
+   * Only accepts 'grid' or 'list' as valid values
+   */
+  const setViewMode = useCallback((mode) => {
+    if (mode === 'grid' || mode === 'list') {
+      setViewModeState(mode);
+    } else {
+      console.warn(`Invalid view mode: ${mode}. Must be 'grid' or 'list'.`);
+    }
+  }, []);
 
-  return [viewMode, setViewMode];
+  /**
+   * Toggle between grid and list views
+   */
+  const toggleViewMode = useCallback(() => {
+    setViewModeState(current => current === 'grid' ? 'list' : 'grid');
+  }, []);
+
+  return {
+    viewMode,
+    setViewMode,
+    toggleViewMode,
+    isGridView: viewMode === 'grid',
+    isListView: viewMode === 'list'
+  };
 }

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -5,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Star } from 'lucide-react';
 import { getCourseCategories, getDifficultyLevels } from '@/data/mockCourses';
 
-const LearningFilters = ({ filters, setFilters, clearFilters }) => {
+const LearningFilters = ({ filters, onFilterChange, onReset }) => {
   const categories = getCourseCategories();
   const difficulties = getDifficultyLevels();
   const priceTypes = ['Free', 'Paid'];
@@ -15,7 +16,13 @@ const LearningFilters = ({ filters, setFilters, clearFilters }) => {
     const newValues = currentValues.includes(value)
       ? currentValues.filter((v) => v !== value)
       : [...currentValues, value];
-    setFilters({ ...filters, [category]: newValues });
+    
+    // Call onFilterChange with the category key and new values
+    onFilterChange(category, newValues);
+  };
+
+  const handleSingleFilterChange = (key, value) => {
+    onFilterChange(key, value);
   };
 
   return (
@@ -90,7 +97,7 @@ const LearningFilters = ({ filters, setFilters, clearFilters }) => {
                 type="radio" 
                 name="rating"
                 checked={filters.minRating === stars}
-                onChange={() => setFilters({ ...filters, minRating: stars })}
+                onChange={() => handleSingleFilterChange('minRating', stars)}
                 className="w-4 h-4 text-purple-600 focus:ring-purple-500 border-gray-300" 
               />
               <span className="flex text-yellow-400">
@@ -106,7 +113,7 @@ const LearningFilters = ({ filters, setFilters, clearFilters }) => {
 
       <Button 
         variant="outline" 
-        onClick={clearFilters}
+        onClick={onReset}
         className="w-full text-gray-700 border-gray-300 hover:bg-gray-100 font-semibold"
       >
         Clear All Filters

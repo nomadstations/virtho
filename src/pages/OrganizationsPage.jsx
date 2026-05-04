@@ -4,11 +4,10 @@ import { Helmet } from 'react-helmet';
 import { Building2, Plus, Search, Edit2, Trash2, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/use-toast';
-import { AddOrganizationModal } from '@/components/dashboard/AddOrganizationModal.jsx';
+import { useToast } from '@/hooks/use-toast';
+import { AddOrganizationWizard } from '@/components/dashboard/AddOrganizationWizard.jsx';
 import DashboardSidebar from '@/components/DashboardSidebar.jsx';
-import Breadcrumb from '@/components/Breadcrumb.jsx';
-import { getBreadcrumbPaths } from '@/utils/breadcrumbConfig.js';
+import DashboardBreadcrumb from '@/components/DashboardBreadcrumb.jsx';
 import { EmptyState, LoadingSpinner } from '@/components/SharedUI.jsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -28,7 +27,6 @@ function OrganizationsPage() {
         if (storedOrgs) {
           setOrganizations(JSON.parse(storedOrgs));
         } else {
-          // Initialize with mock data if empty
           const sampleData = [
             { id: '1', name: 'Acme Corp', description: 'A technology company.', category: 'Tech', createdAt: new Date().toISOString() },
             { id: '2', name: 'Global Health', description: 'Providing health services worldwide.', category: 'Healthcare', createdAt: new Date(Date.now() - 86400000).toISOString() },
@@ -43,7 +41,6 @@ function OrganizationsPage() {
       }
     };
     
-    // Slight delay for smooth loading animation
     const timer = setTimeout(loadData, 500);
     return () => clearTimeout(timer);
   }, []);
@@ -101,13 +98,12 @@ function OrganizationsPage() {
       <Helmet><title>Organizations - Virtho Dashboard</title></Helmet>
       
       <div className="flex w-full bg-gray-50 min-h-[calc(100vh-5rem)]">
-        {/* Dashboard Sidebar Integration */}
         <DashboardSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
 
         <main className="flex-1 w-full overflow-x-hidden overflow-y-auto">
           <div className="bg-white border-b border-gray-200 pt-6 pb-8 px-4 md:px-8">
             <div className="max-w-7xl mx-auto">
-              <div className="flex items-center gap-4 mb-4">
+              <div className="flex items-center gap-4 mb-6">
                 <Button 
                   variant="outline" 
                   size="icon" 
@@ -117,7 +113,9 @@ function OrganizationsPage() {
                 >
                   <Menu className="w-5 h-5" />
                 </Button>
-                <Breadcrumb paths={getBreadcrumbPaths('/organizations')} />
+                <div className="flex-1">
+                  <DashboardBreadcrumb />
+                </div>
               </div>
               
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -211,7 +209,7 @@ function OrganizationsPage() {
         </main>
       </div>
 
-      <AddOrganizationModal 
+      <AddOrganizationWizard 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         initialData={editingOrg}

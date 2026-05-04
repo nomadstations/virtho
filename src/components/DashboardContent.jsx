@@ -1,191 +1,208 @@
-import React, { useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
-import { 
-  FolderKanban, 
-  Users, 
-  Briefcase, 
-  GraduationCap, 
-  ShoppingBag,
-  ArrowRight,
-  Clock,
-  Plus
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext.jsx';
-import { useToast } from '@/components/ui/use-toast';
-import { AddOrganizationModal } from '@/components/dashboard/AddOrganizationModal.jsx';
-import { AddGroupModal } from '@/components/dashboard/AddGroupModal.jsx';
 
-function DashboardContent() {
-  const { currentUser } = useAuth();
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQuickActions } from '@/hooks/useQuickActions';
+import { useQuickLinks } from '@/hooks/useQuickLinks';
+import { QuickActionsSection } from '@/components/dashboard/QuickActionsSection';
+import { QuickLinksSection } from '@/components/dashboard/QuickLinksSection';
+import DashboardSettings from '@/components/dashboard/DashboardSettings';
+import { FileText, Briefcase, ShoppingBag, Users, Activity, GraduationCap } from 'lucide-react';
+import { useCoursesData } from '@/hooks/useCoursesData';
+import { useToast } from '@/components/ui/use-toast';
+
+export default function DashboardContent() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
-  const [isAddGroupModalOpen, setIsAddGroupModalOpen] = useState(false);
+  const { currentUser, dashboardData } = useAuth();
+  const { quickActions } = useQuickActions();
+  const { quickLinks } = useQuickLinks();
+  const { courses } = useCoursesData();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  const openAddOrgModal = useCallback(() => setIsAddOrgModalOpen(true), []);
-  const closeAddOrgModal = useCallback(() => setIsAddOrgModalOpen(false), []);
-  
-  const openAddGroupModal = useCallback(() => setIsAddGroupModalOpen(true), []);
-  const closeAddGroupModal = useCallback(() => setIsAddGroupModalOpen(false), []);
+  console.log('[DashboardContent] Rendering with quickActions:', quickActions);
+  console.log('[DashboardContent] quickActions.length:', quickActions.length);
 
-  const handleNotImplemented = () => {
-    toast({
-      title: "Coming Soon",
-      description: "🚧 This feature isn't implemented yet—but don't worry! You can request it in your next prompt! 🚀",
-    });
-  };
+  const activeCoursesCount = courses.filter(c => c.status?.toLowerCase() === 'active').length;
 
-  // Explicitly defined 7 quick actions in the requested order
-  const quickActions = [
-    { label: 'Add Organization', icon: Plus, color: 'bg-amber-100 text-amber-700 hover:bg-amber-200', action: openAddOrgModal },
-    { label: 'Add Group', icon: Plus, color: 'bg-teal-100 text-teal-700 hover:bg-teal-200', action: openAddGroupModal },
-    { label: 'Add Course', icon: Plus, color: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200', action: () => navigate('/dashboard') },
-    { label: 'Add Project', icon: Plus, color: 'bg-purple-100 text-purple-700 hover:bg-purple-200', action: () => navigate('/create-project') },
-    { label: 'Write a Post', icon: Plus, color: 'bg-pink-100 text-pink-700 hover:bg-pink-200', action: handleNotImplemented },
-    { label: 'Create Event', icon: Plus, color: 'bg-green-100 text-green-700 hover:bg-green-200', action: handleNotImplemented },
-    { label: 'Add Product', icon: Plus, color: 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200', action: handleNotImplemented },
+  const stats = [
+    { label: 'Total Courses', value: courses.length, icon: <GraduationCap size={24} className="text-yellow-500" /> },
+    { label: 'Active Courses', value: activeCoursesCount, icon: <Activity size={24} className="text-green-500" /> },
+    { label: 'Total Blogs', value: dashboardData.blogs.length, icon: <FileText size={24} className="text-blue-500" /> },
+    { label: 'Total Projects', value: dashboardData.projects.length, icon: <Briefcase size={24} className="text-purple-500" /> },
+    { label: 'Total Products', value: dashboardData.products.length, icon: <ShoppingBag size={24} className="text-emerald-500" /> },
+    { label: 'Active Teams', value: dashboardData.teams.length, icon: <Users size={24} className="text-indigo-500" /> },
   ];
 
-  const navigationAccess = [
-    { title: 'My Projects', icon: FolderKanban, path: '/projects', color: 'bg-blue-50 text-blue-600', hover: 'hover:bg-blue-600' },
-    { title: 'Communities', icon: Users, path: '/community', color: 'bg-green-50 text-green-600', hover: 'hover:bg-green-600' },
-    { title: 'Job Board', icon: Briefcase, path: '/jobs', color: 'bg-yellow-50 text-yellow-600', hover: 'hover:bg-yellow-600' },
-    { title: 'Learning Hub', icon: GraduationCap, path: '/learning', color: 'bg-purple-50 text-purple-600', hover: 'hover:bg-purple-600' },
-    { title: 'Marketplace', icon: ShoppingBag, path: '/marketplace', color: 'bg-pink-50 text-pink-600', hover: 'hover:bg-pink-600' },
-  ];
-
-  const recentActivity = [
-    { id: 1, action: 'Logged in to dashboard', time: 'Just now', type: 'system' },
-    { id: 2, action: 'Viewed latest projects', time: '2 hours ago', type: 'project' },
-    { id: 3, action: 'Updated profile settings', time: 'Yesterday', type: 'user' },
-  ];
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
+  const handleActionClick = (action) => {
+    console.log('[DashboardContent] Action clicked:', action.id);
+    
+    try {
+      switch (action.id) {
+        case 'create-organization':
+          toast({
+            title: '🏢 Create Organization',
+            description: 'Organization creation modal will open here.',
+          });
+          break;
+        
+        case 'create-group':
+          toast({
+            title: '👥 Create Group',
+            description: 'Group creation modal will open here.',
+          });
+          break;
+        
+        case 'create-project':
+          navigate('/create-project');
+          break;
+        
+        case 'create-team':
+          toast({
+            title: '🚧 Create Team',
+            description: 'Team creation feature coming soon!',
+          });
+          break;
+        
+        case 'create-post':
+          toast({
+            title: '✍️ Write a Post',
+            description: 'Post creation feature coming soon!',
+          });
+          break;
+        
+        case 'create-event':
+          toast({
+            title: '📅 Create Event',
+            description: 'Event creation feature coming soon!',
+          });
+          break;
+        
+        case 'add-product':
+          toast({
+            title: '🛍️ Add Product',
+            description: 'Product creation feature coming soon!',
+          });
+          break;
+        
+        case 'add-course':
+          toast({
+            title: '🎓 Add Course',
+            description: 'Course creation feature coming soon!',
+          });
+          break;
+        
+        case 'post-job':
+          toast({
+            title: '💼 Post a Job',
+            description: 'Job posting feature coming soon!',
+          });
+          break;
+        
+        default:
+          toast({
+            title: '🚧 Feature Not Implemented',
+            description: `${action.label} functionality is coming soon!`,
+          });
+      }
+    } catch (error) {
+      console.error('[DashboardContent] Error executing action:', error);
+      toast({
+        title: 'Error',
+        description: 'There was a problem executing this action. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
+  const handleOpenSettings = () => {
+    console.log('[DashboardContent] Opening settings');
+    setIsSettingsOpen(true);
   };
 
   return (
-    <>
-      <motion.div 
-        className="max-w-7xl mx-auto space-y-8"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
+    <div className="w-full space-y-4 sm:space-y-6 md:space-y-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-br from-lavender-primary via-lavender-light to-lavender-lighter rounded-2xl p-6 sm:p-8 md:p-10 lg:p-12 shadow-lg text-white w-full"
       >
-        {/* Welcome Section */}
-        <motion.div variants={itemVariants} className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-              {currentUser?.name?.charAt(0).toUpperCase() || 'U'}
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, {currentUser?.name || 'User'}! 👋</h1>
-              <p className="text-gray-500 text-lg">Ready to make an impact today?</p>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Quick Actions Section */}
-        <motion.div variants={itemVariants} className="mb-8 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">Quick Actions</h2>
-          
-          {/* Pill-shaped Quick Actions - Ensure mapping includes ALL items */}
-          <div className="flex flex-wrap gap-3 mb-8">
-            {quickActions.map((action, index) => (
-              <button
-                key={`${action.label}-${index}`}
-                onClick={action.action}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-200 hover:shadow-sm ${action.color}`}
-              >
-                <action.icon className="w-4 h-4" />
-                {action.label}
-              </button>
-            ))}
-          </div>
-
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Jump To...</h3>
-          {/* Other Quick Action Items (Navigation) */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {navigationAccess.map((item, index) => (
-              <Link key={index} to={item.path} className="h-full block">
-                <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group flex flex-col items-center text-center h-full cursor-pointer hover:bg-white">
-                  <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 transition-colors duration-300 ${item.color} group-${item.hover} group-hover:text-white`}>
-                    <item.icon className="w-7 h-7" />
-                  </div>
-                  <h3 className="text-gray-800 font-semibold group-hover:text-purple-600 transition-colors">{item.title}</h3>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Recent Activity & Stats */}
-        <div className="grid lg:grid-cols-3 gap-8">
-          <motion.div variants={itemVariants} className="lg:col-span-2 bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-800">Recent Activity</h2>
-              <Button variant="ghost" className="text-purple-600 hover:text-purple-700 hover:bg-purple-50">
-                View All <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-            <div className="space-y-6">
-              {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 mt-1">
-                    <Clock className="w-5 h-5 text-gray-400" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-gray-800 font-medium">{activity.action}</p>
-                    <p className="text-sm text-gray-500 mt-1">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          <motion.div variants={itemVariants} className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-8 shadow-md text-white">
-            <h2 className="text-xl font-bold mb-6 text-white/90">Your Overview</h2>
-            <div className="space-y-6">
-              <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
-                <p className="text-white/70 text-sm font-medium mb-1">Active Projects</p>
-                <p className="text-3xl font-bold">0</p>
-              </div>
-              <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
-                <p className="text-white/70 text-sm font-medium mb-1">Communities Joined</p>
-                <p className="text-3xl font-bold">0</p>
-              </div>
-              <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
-                <p className="text-white/70 text-sm font-medium mb-1">Learning Progress</p>
-                <p className="text-3xl font-bold">0%</p>
-              </div>
-            </div>
-          </motion.div>
+        <div className="max-w-4xl">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">
+            Welcome back, {currentUser.name}! 👋
+          </h1>
+          <p className="text-base sm:text-lg md:text-xl text-lavender-lightest opacity-90">
+            Here's what's happening with your projects and activities today.
+          </p>
         </div>
       </motion.div>
 
-      {/* Modals for Quick Actions */}
-      <AddOrganizationModal 
-        isOpen={isAddOrgModalOpen} 
-        onClose={closeAddOrgModal} 
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-6 w-full">
+        {stats.map((stat, index) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: index * 0.1 }}
+            className="bg-white rounded-xl p-4 sm:p-5 md:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
+              <div className="flex-shrink-0">{stat.icon}</div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-gray-600 truncate">{stat.label}</p>
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stat.value}</p>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="w-full">
+        <QuickLinksSection 
+          quickLinks={quickLinks}
+          onOpenSettings={handleOpenSettings}
+        />
+      </div>
+
+      <div className="w-full">
+        <QuickActionsSection 
+          quickActions={quickActions}
+          onActionClick={handleActionClick}
+          onOpenSettings={handleOpenSettings}
+        />
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="bg-white rounded-xl p-6 sm:p-8 shadow-sm border border-gray-100 w-full"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Recent Activity</h2>
+            <p className="text-sm text-gray-600 mt-1">Your latest actions and updates</p>
+          </div>
+          <Activity className="w-6 h-6 text-lavender-primary" />
+        </div>
+        <div className="space-y-4">
+          {dashboardData.activities.slice(0, 5).map((activity, index) => (
+            <div key={index} className="flex items-start gap-4 pb-4 border-b border-gray-100 last:border-0">
+              <div className="w-2 h-2 rounded-full bg-lavender-primary mt-2 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm sm:text-base text-gray-900">{activity.text}</p>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">{activity.timestamp}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+
+      <DashboardSettings 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
       />
-      <AddGroupModal 
-        isOpen={isAddGroupModalOpen} 
-        onClose={closeAddGroupModal} 
-      />
-    </>
+    </div>
   );
 }
-
-export default DashboardContent;

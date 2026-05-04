@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
-import { Filter, X, ChevronLeft, ChevronRight, Grid, List } from 'lucide-react';
+import { Filter, X, ChevronLeft, ChevronRight, Grid, List, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import MarketplaceFilters from '@/components/MarketplaceFilters';
 import MarketplaceSortBar from '@/components/MarketplaceSortBar';
@@ -15,7 +16,8 @@ function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('relevance');
   const [filters, setFilters] = useState({ categories: [], minRating: 0, maxPrice: 1000, inStockOnly: false });
-  const [viewMode, setViewMode] = useViewMode('virtho_marketplace_view_mode', 'grid');
+  
+  const { viewMode, setViewMode, toggleViewMode, isGridView, isListView } = useViewMode('grid');
   
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
@@ -40,13 +42,19 @@ function MarketplacePage() {
         <meta name="description" content="Discover and purchase exclusive products, digital assets, and merchandise in the Virtho Marketplace." />
       </Helmet>
       
-      <div className="bg-white border-b border-gray-200 pt-8 pb-12">
-        <div className="container mx-auto px-4">
+      {/* Header Section - Reduced Height (50% reduction) */}
+      <div className="bg-gradient-to-r from-purple-50 to-white border-b border-gray-100 public-hero-section">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <Breadcrumb paths={getBreadcrumbPaths('/marketplace')} />
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-3xl mx-auto mt-8">
-            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">Virtho Marketplace</h1>
-            <p className="text-xl text-gray-600 leading-relaxed">
-              Support our mission with exclusive merchandise, verified digital assets, and sustainable goods powering the real-world economy.
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-3xl mx-auto mt-4">
+            <div className="flex items-center justify-center gap-2 mb-1.5">
+              <div className="bg-purple-100 p-1.5 rounded-lg">
+                <ShoppingBag className="h-3 w-3 text-purple-600" />
+              </div>
+            </div>
+            <h1 className="text-gray-900 mb-1 text-xl md:text-2xl font-extrabold">Virtho Marketplace</h1>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Support our mission with exclusive merchandise and sustainable goods.
             </p>
           </motion.div>
         </div>
@@ -72,10 +80,18 @@ function MarketplacePage() {
                   <Filter className="w-5 h-5" /> Filter
                 </Button>
                 <div className="flex bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
-                  <button onClick={() => setViewMode('grid')} className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-purple-100 text-purple-700' : 'text-gray-500 hover:text-gray-700'}`}>
+                  <button 
+                    onClick={() => setViewMode('grid')} 
+                    className={`p-2 rounded-md transition-all ${isGridView ? 'bg-purple-100 text-purple-700' : 'text-gray-500 hover:text-gray-700'}`}
+                    aria-label="Grid view"
+                  >
                     <Grid className="w-5 h-5" />
                   </button>
-                  <button onClick={() => setViewMode('list')} className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-purple-100 text-purple-700' : 'text-gray-500 hover:text-gray-700'}`}>
+                  <button 
+                    onClick={() => setViewMode('list')} 
+                    className={`p-2 rounded-md transition-all ${isListView ? 'bg-purple-100 text-purple-700' : 'text-gray-500 hover:text-gray-700'}`}
+                    aria-label="List view"
+                  >
                     <List className="w-5 h-5" />
                   </button>
                 </div>

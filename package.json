@@ -1,9 +1,9 @@
 {
   "name": "virtho-foundation",
   "type": "module",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": true,
-  "description": "Forced rebuild version - hard cache clear v3",
+  "description": "Tender spring flower color theme - v4",
   "scripts": {
     "dev": "vite --host :: --port 3000",
     "build": "node tools/generate-llms.js || true && vite build",
@@ -57,6 +57,7 @@
     "react-hook-form": "^7.71.2",
     "react-resizable-panels": "^4.7.3",
     "react-router-dom": "^6.16.0",
+    "react-simple-maps": "^3.0.0",
     "recharts": "^3.8.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^1.14.0",

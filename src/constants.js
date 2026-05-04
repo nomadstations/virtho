@@ -1,62 +1,80 @@
 
+// Navigation and Route Constants
+
 export const ROUTES = {
   HOME: '/',
-  HEALTH: '/health',
+  ABOUT: '/about',
+  HEALTH_WELLNESS: '/health/wellness',
+  HEALTH_ID: '/health/health-id',
+  HEALTH_LEGAL: '/health/legal-and-insurance',
+  LEARNING: '/learning',
   BLOGS: '/blogs',
   BLOG_DETAIL: '/blog/:slug',
-  COMMUNITY: '/community',
   JOBS: '/jobs',
-  LEARNING: '/learning',
   MARKETPLACE: '/marketplace',
   PROJECTS: '/projects',
-  LOGIN: '/login',
-  REGISTER: '/register',
-  DASHBOARD: '/dashboard',
+  COMMUNITY: '/community',
+  ORGANIZATIONS: '/organizations',
+  GROUPS: '/groups',
+  GALLERY: '/gallery',
   CONTACT: '/contact',
   SUPPORT: '/support-us',
   TERMS: '/terms',
   PRIVACY: '/privacy',
-  COMMUNITY_HUMAN: '/community/human/:id',
-  COMMUNITY_GROUP: '/community/group/:id',
-  COMMUNITY_ORG: '/community/organization/:id',
-  DB_SCHEMA: '/db-schema',
-  ORGANIZATIONS: '/organizations',
-  GROUPS: '/groups',
+  LOGIN: '/login',
+  REGISTER: '/register',
+  DASHBOARD: '/dashboard',
+  PROFILE: '/profile',
+  SETTINGS: '/settings',
 };
 
 export const NAV_LINKS = [
-  { name: 'Home', path: ROUTES.HOME },
-  { name: 'Projects', path: ROUTES.PROJECTS },
-  { name: 'Learning', path: ROUTES.LEARNING },
   { 
-    name: 'Economy', 
+    name: 'Home', 
+    path: ROUTES.HOME 
+  },
+  {
+    name: 'Health',
     dropdown: true,
     subLinks: [
-      { name: 'Marketplace', path: ROUTES.MARKETPLACE },
-      { name: 'Jobs', path: ROUTES.JOBS }
+      { name: 'Wellness', path: ROUTES.HEALTH_WELLNESS },
+      { name: 'Health ID', path: ROUTES.HEALTH_ID },
+      { name: 'Legal & Insurance', path: ROUTES.HEALTH_LEGAL }
     ]
   },
-  { name: 'Health', path: ROUTES.HEALTH },
-  { 
-    name: 'Social', 
+  {
+    name: 'Knowledge',
     dropdown: true,
     subLinks: [
+      { name: 'Learning', path: ROUTES.LEARNING },
       { name: 'Blogs', path: ROUTES.BLOGS },
-      { name: 'Communities', path: ROUTES.COMMUNITY }
+      { name: 'Gallery', path: ROUTES.GALLERY }
     ]
   },
+  {
+    name: 'Economy',
+    dropdown: true,
+    subLinks: [
+      { name: 'Jobs', path: ROUTES.JOBS },
+      { name: 'Marketplace', path: ROUTES.MARKETPLACE },
+      { name: 'Projects', path: ROUTES.PROJECTS }
+    ]
+  },
+  {
+    name: 'Social',
+    dropdown: true,
+    subLinks: [
+      { name: 'Community', path: ROUTES.COMMUNITY },
+      { name: 'Organizations', path: ROUTES.ORGANIZATIONS },
+      { name: 'Groups', path: ROUTES.GROUPS }
+    ]
+  }
 ];
 
 export const FOOTER_LINKS = [
   { name: 'Contact', path: ROUTES.CONTACT },
+  { name: 'About', path: ROUTES.ABOUT },
   { name: 'Support Us', path: ROUTES.SUPPORT },
-  { name: 'Terms of Use', path: ROUTES.TERMS },
-  { name: 'Privacy Policy', path: ROUTES.PRIVACY },
-  { name: 'Blog', path: ROUTES.BLOGS },
+  { name: 'Terms of Service', path: ROUTES.TERMS },
+  { name: 'Privacy Policy', path: ROUTES.PRIVACY }
 ];
-
-export const UI_CONSTANTS = {
-  ANIMATION_DURATION: 0.3,
-  MOBILE_BREAKPOINT: 768,
-  PAGE_SIZE_DEFAULT: 12,
-};

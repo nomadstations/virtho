@@ -1,131 +1,407 @@
-import React, { useMemo, useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { Grid, List, SlidersHorizontal, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Grid, List, Filter, X } from 'lucide-react';
 import ProjectCard from '@/components/ProjectCard';
 import ProjectListView from '@/components/ProjectListView';
-import SearchComponent from '@/components/SearchComponent';
 import ProjectFilters from '@/components/ProjectFilters';
-import Breadcrumb from '@/components/Breadcrumb';
-import { getBreadcrumbPaths } from '@/utils/breadcrumbConfig';
+import PublicBreadcrumb from '@/components/PublicBreadcrumb';
+import SearchComponent from '@/components/SearchComponent';
+import { LoadingSpinner, EmptyState } from '@/components/SharedUI';
 import { useFilters } from '@/hooks/useFilters';
-import { useViewMode } from '@/hooks/useViewMode';
 import { useSearch } from '@/hooks/useSearch';
-import { ANIMATION_VARIANTS } from '@/utils/config';
+import { useViewMode } from '@/hooks/useViewMode';
+import { usePagination } from '@/hooks/usePagination';
+import { MOCK_PROJECTS } from '@/constants/mockDataConfig';
 
 function ProjectsPage() {
-  const [viewMode, setViewMode] = useViewMode('virtho_projects_view', 'grid');
-  const { searchTerm, setSearchTerm, clearSearch } = useSearch();
-  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  
-  const { filters, setFilters, clearFilters: resetFilters } = useFilters({
-    categories: [], minRating: 0, status: [],
+  const [projects, setProjects] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+
+  const { filters, handleFilterChange, resetFilters } = useFilters({
+    category: '',
+    status: '',
   });
 
-  const clearAllFilters = () => { resetFilters(); clearSearch(); };
+  const { searchTerm, handleSearchChange } = useSearch();
+  const { viewMode, setViewMode } = useViewMode('grid');
+  const { currentPage, itemsPerPage, handlePageChange } = usePagination(9);
 
-  const sampleProjects = [
-    { id: 'vrth-token-launch', title: 'VRTH Token Launch Platform', description: 'A comprehensive web platform for launching and managing resource-backed tokens.', author: 'Virtho Team', publishedDate: '2025-12-15', image: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&h=600&fit=crop', category: 'Web Development', status: 'active', rating: 5 },
-    { id: 'clean-water-tracker', title: 'Clean Water Distribution Tracker', description: 'Mobile application for field workers to track clean water deliveries.', author: 'Dr. Sarah Mitchell', publishedDate: '2025-11-28', image: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=800&h=600&fit=crop', category: 'Mobile App', status: 'active', rating: 4 },
-    { id: 'energy-grid-ui', title: 'Renewable Energy Dashboard UI/UX', description: 'Designing intuitive interfaces for decentralized energy platforms.', author: 'Marcus Chen', publishedDate: '2025-10-10', image: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800&h=600&fit=crop', category: 'Design', status: 'archived', rating: 5 },
-    { id: 'gold-reserve-analysis', title: 'Precious Metals Market Predictor', description: 'Machine learning model predicting gold reserve values.', author: 'Elena Rodriguez', publishedDate: '2025-09-22', image: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=800&h=600&fit=crop', category: 'AI/ML', status: 'active', rating: 3 }
-  ];
-
-  const filteredProjects = useMemo(() => {
-    return sampleProjects.filter(project => {
-      if (searchTerm) {
-        const lower = searchTerm.toLowerCase();
-        if (!project.title.toLowerCase().includes(lower) && !project.description.toLowerCase().includes(lower)) return false;
+  // Load projects
+  useEffect(() => {
+    const loadProjects = async () => {
+      setIsLoading(true);
+      try {
+        await new Promise(resolve => setTimeout(resolve, 600));
+        
+        const storedProjects = localStorage.getItem('virtho_projects');
+        if (storedProjects) {
+          try {
+            const parsed = JSON.parse(storedProjects);
+            setProjects(Array.isArray(parsed) ? parsed : []);
+          } catch (error) {
+            console.error('Error parsing stored projects:', error);
+            setProjects(MOCK_PROJECTS || []);
+          }
+        } else {
+          setProjects(Array.isArray(MOCK_PROJECTS) ? MOCK_PROJECTS : []);
+        }
+      } catch (error) {
+        console.error('Error loading projects:', error);
+        setProjects([]);
+      } finally {
+        setIsLoading(false);
       }
-      if (filters.categories.length > 0 && !filters.categories.includes(project.category)) return false;
-      if (filters.minRating > 0 && (project.rating || 0) < filters.minRating) return false;
-      if (filters.status.length > 0 && !filters.status.includes(project.status)) return false;
+    };
+
+    loadProjects();
+  }, []);
+
+  // Listen for project creation events
+  useEffect(() => {
+    const handleProjectCreated = (event) => {
+      const newProject = event.detail;
+      if (newProject && typeof newProject === 'object') {
+        setProjects(prev => {
+          const currentProjects = Array.isArray(prev) ? prev : [];
+          return [newProject, ...currentProjects];
+        });
+      }
+    };
+
+    window.addEventListener('projectCreated', handleProjectCreated);
+    return () => window.removeEventListener('projectCreated', handleProjectCreated);
+  }, []);
+
+  // Filter and search projects
+  const filteredProjects = React.useMemo(() => {
+    const projectsArray = Array.isArray(projects) ? projects : [];
+    
+    return projectsArray.filter(project => {
+      if (!project || typeof project !== 'object') {
+        return false;
+      }
+
+      // Search filter
+      if (searchTerm) {
+        const lowerSearch = searchTerm.toLowerCase();
+        const matchesSearch = 
+          (project.title && project.title.toLowerCase().includes(lowerSearch)) ||
+          (project.description && project.description.toLowerCase().includes(lowerSearch)) ||
+          (project.author && project.author.toLowerCase().includes(lowerSearch));
+        
+        if (!matchesSearch) return false;
+      }
+
+      // Category filter
+      if (filters.category && project.category !== filters.category) {
+        return false;
+      }
+
+      // Status filter
+      if (filters.status && project.status !== filters.status) {
+        return false;
+      }
+
       return true;
     });
-  }, [searchTerm, filters]);
+  }, [projects, searchTerm, filters]);
+
+  const safeFilteredProjects = Array.isArray(filteredProjects) ? filteredProjects : [];
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(safeFilteredProjects.length / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedProjects = safeFilteredProjects.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    handlePageChange(1);
+  }, [filters, searchTerm, handlePageChange]);
+
+  const hasNoResults = !isLoading && safeFilteredProjects.length === 0;
+  const hasActiveFilters = searchTerm || filters.category || filters.status;
 
   return (
     <>
-      <Helmet><title>Projects - Virtho Platform</title></Helmet>
-      
-      <div className="bg-white border-b border-gray-200 pt-8 pb-12">
-        <div className="container mx-auto px-4">
-          <Breadcrumb paths={getBreadcrumbPaths('/projects')} />
-          <div className="text-center max-w-3xl mx-auto mt-8">
-            <motion.h1 variants={ANIMATION_VARIANTS.slideUp} initial="initial" animate="animate" className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">Our Projects</motion.h1>
-            <motion.p variants={ANIMATION_VARIANTS.slideUp} initial="initial" animate="animate" className="text-xl text-gray-600 leading-relaxed">Discover how our community is building the future through innovative software, design, and data solutions.</motion.p>
+      <Helmet>
+        <title>Projects - Virtho Foundation</title>
+        <meta name="description" content="Explore and discover innovative projects. Collaborate and make a lasting impact together." />
+      </Helmet>
+
+      <div className="min-h-screen bg-white">
+        {/* Breadcrumb */}
+        <div className="border-b border-gray-100 bg-white">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <PublicBreadcrumb />
           </div>
         </div>
-      </div>
 
-      <div className="container mx-auto px-4 py-8 md:py-12">
-        <div className="flex flex-col lg:flex-row gap-8">
-          <aside className="hidden lg:block w-72 shrink-0">
-            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm sticky top-24">
-              <div className="flex items-center gap-3 mb-8 pb-4 border-b border-gray-100"><Filter className="w-5 h-5 text-purple-600" /><h2 className="text-xl font-bold">Filters</h2></div>
-              <ProjectFilters filters={filters} setFilters={setFilters} clearFilters={clearAllFilters} />
-            </div>
-          </aside>
-
-          <div className="flex-1 min-w-0">
-            <div className="mb-6">
-              <div className="lg:hidden mb-4 flex gap-4">
-                <Button onClick={() => setIsMobileFiltersOpen(true)} className="flex-1 bg-white border border-gray-200 text-gray-800 hover:bg-gray-50 shadow-sm h-12"><Filter className="w-5 h-5 mr-2" /> Filter</Button>
-              </div>
-              
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
-                <div className="w-full md:max-w-md">
-                  <SearchComponent 
-                    value={searchTerm} 
-                    onChange={setSearchTerm} 
-                    placeholder="Search projects..." 
-                  />
-                </div>
-                <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-                  <div className="hidden lg:block text-sm font-medium text-gray-500 mr-2">Showing {filteredProjects.length} results</div>
-                  <div className="flex bg-gray-50 p-1 rounded-lg border border-gray-200">
-                    <button onClick={() => setViewMode('grid')} className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><Grid className="w-5 h-5" /></button>
-                    <button onClick={() => setViewMode('list')} className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><List className="w-5 h-5" /></button>
-                  </div>
+        {/* Header Section - Reduced Height (50% reduction) */}
+        <div className="bg-gradient-to-r from-purple-50 to-white border-b border-gray-100 public-hero-section">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-center max-w-3xl mx-auto"
+            >
+              <div className="flex items-center justify-center gap-2 mb-1.5">
+                <div className="bg-purple-100 p-1.5 rounded-lg">
+                  <Rocket className="h-3 w-3 text-purple-600" />
                 </div>
               </div>
+              <h1 className="text-gray-900 mb-1 text-xl md:text-2xl font-extrabold">
+                Discover Projects
+              </h1>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Explore innovative projects from our community.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Search and Filters Section */}
+        <div className="bg-white border-b border-gray-100 sticky top-20 z-30 shadow-sm">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+              {/* Search Bar */}
+              <div className="w-full md:w-96">
+                <SearchComponent
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  placeholder="Search projects..."
+                />
+              </div>
+
+              {/* Controls */}
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                {/* View Mode Toggle */}
+                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                  <Button
+                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('grid')}
+                    className={`${
+                      viewMode === 'grid'
+                        ? 'bg-white shadow-sm text-purple-700'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                    aria-label="Grid view"
+                  >
+                    <Grid className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'list' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('list')}
+                    className={`${
+                      viewMode === 'list'
+                        ? 'bg-white shadow-sm text-purple-700'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                    aria-label="List view"
+                  >
+                    <List className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                {/* Filter Toggle */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  <SlidersHorizontal className="w-4 h-4 mr-2" />
+                  Filters
+                </Button>
+              </div>
             </div>
 
-            <div className="min-h-[500px]">
-              <AnimatePresence mode="wait">
-                {filteredProjects.length === 0 ? (
-                  <motion.div variants={ANIMATION_VARIANTS.fadeIn} initial="initial" animate="animate" exit="exit" className="text-center py-20 bg-white rounded-2xl border border-gray-200">
-                    <p className="text-gray-500 mb-2">No projects found.</p>
-                    <Button variant="link" onClick={clearAllFilters} className="text-purple-600">Clear all filters</Button>
-                  </motion.div>
-                ) : viewMode === 'grid' ? (
-                  <motion.div key="grid" variants={ANIMATION_VARIANTS.fadeIn} initial="initial" animate="animate" exit="exit" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {filteredProjects.map((p, i) => <motion.div key={p.id} initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:i*0.05}}><ProjectCard project={p} /></motion.div>)}
-                  </motion.div>
-                ) : (
-                  <motion.div key="list" variants={ANIMATION_VARIANTS.fadeIn} initial="initial" animate="animate" exit="exit" className="flex flex-col gap-6">
-                    {filteredProjects.map((p, i) => <motion.div key={p.id} initial={{opacity:0,x:-20}} animate={{opacity:1,x:0}} transition={{delay:i*0.05}}><ProjectListView project={p} /></motion.div>)}
-                  </motion.div>
+            {/* Active Filters Display */}
+            {hasActiveFilters && (
+              <div className="flex items-center gap-2 mt-4 flex-wrap">
+                <span className="text-sm text-gray-600">Active filters:</span>
+                {filters.category && (
+                  <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                    {filters.category}
+                  </span>
                 )}
-              </AnimatePresence>
+                {filters.status && (
+                  <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium capitalize">
+                    {filters.status}
+                  </span>
+                )}
+                {searchTerm && (
+                  <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                    Search: "{searchTerm}"
+                  </span>
+                )}
+                <button
+                  onClick={() => {
+                    resetFilters();
+                    handleSearchChange('');
+                  }}
+                  className="text-xs text-purple-600 hover:text-purple-700 font-medium underline"
+                >
+                  Clear all
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Filters Sidebar */}
+            <aside
+              className={`${
+                isFiltersOpen ? 'block' : 'hidden'
+              } lg:block w-full lg:w-64 flex-shrink-0`}
+            >
+              <div className="sticky top-36">
+                <ProjectFilters
+                  filters={filters}
+                  onFilterChange={handleFilterChange}
+                  onReset={resetFilters}
+                />
+              </div>
+            </aside>
+
+            {/* Projects Grid/List */}
+            <div className="flex-1 min-w-0">
+              {isLoading ? (
+                <LoadingSpinner message="Loading projects..." />
+              ) : hasNoResults ? (
+                <EmptyState
+                  icon={SlidersHorizontal}
+                  title="No projects found"
+                  description={
+                    hasActiveFilters
+                      ? 'Try adjusting your search or filters to find what you\'re looking for.'
+                      : 'There are no projects available at the moment. Check back later!'
+                  }
+                  actionText={hasActiveFilters ? 'Clear filters' : null}
+                  onAction={hasActiveFilters ? () => {
+                    resetFilters();
+                    handleSearchChange('');
+                  } : null}
+                />
+              ) : (
+                <>
+                  {/* Results Count */}
+                  <div className="mb-6">
+                    <p className="text-gray-600">
+                      Showing <span className="font-semibold text-gray-900">{startIndex + 1}-{Math.min(endIndex, safeFilteredProjects.length)}</span> of{' '}
+                      <span className="font-semibold text-gray-900">{safeFilteredProjects.length}</span> projects
+                    </p>
+                  </div>
+
+                  {/* Grid View */}
+                  {viewMode === 'grid' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                      {paginatedProjects.map((project, idx) => (
+                        <motion.div
+                          key={project.id || `project-${idx}`}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.05, duration: 0.3 }}
+                        >
+                          <ProjectCard project={project} />
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* List View */}
+                  {viewMode === 'list' && (
+                    <div className="space-y-6">
+                      {paginatedProjects.map((project, idx) => (
+                        <motion.div
+                          key={project.id || `project-${idx}`}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.05, duration: 0.3 }}
+                        >
+                          <ProjectListView project={project} />
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="mt-12 flex justify-center">
+                      <nav className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className="text-gray-700 border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Previous
+                        </Button>
+                        
+                        {[...Array(totalPages)].map((_, idx) => {
+                          const pageNum = idx + 1;
+                          if (
+                            pageNum === 1 ||
+                            pageNum === totalPages ||
+                            (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                          ) {
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={currentPage === pageNum ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => handlePageChange(pageNum)}
+                                className={
+                                  currentPage === pageNum
+                                    ? 'bg-purple-600 text-white hover:bg-purple-700'
+                                    : 'text-gray-700 border-gray-300 hover:bg-gray-50'
+                                }
+                              >
+                                {pageNum}
+                              </Button>
+                            );
+                          } else if (
+                            pageNum === currentPage - 2 ||
+                            pageNum === currentPage + 2
+                          ) {
+                            return (
+                              <span key={pageNum} className="text-gray-400 px-2">
+                                ...
+                              </span>
+                            );
+                          }
+                          return null;
+                        })}
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                          className="text-gray-700 border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </Button>
+                      </nav>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>
       </div>
-      
-      {isMobileFiltersOpen && (
-        <div className="fixed inset-0 z-50 flex lg:hidden">
-          <div className="fixed inset-0 bg-gray-900/60" onClick={() => setIsMobileFiltersOpen(false)} />
-          <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} className="relative w-[320px] bg-white h-full overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b border-gray-100">
-              <h2 className="text-lg font-bold">Filters</h2>
-              <button onClick={() => setIsMobileFiltersOpen(false)}><X className="w-6 h-6 text-gray-500" /></button>
-            </div>
-            <div className="p-4"><ProjectFilters filters={filters} setFilters={setFilters} clearFilters={() => { clearAllFilters(); setIsMobileFiltersOpen(false); }} /></div>
-          </motion.div>
-        </div>
-      )}
     </>
   );
 }

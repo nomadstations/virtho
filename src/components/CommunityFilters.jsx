@@ -1,3 +1,4 @@
+
 import React from 'react';
 import FilterPanel from './filters/FilterPanel';
 import { COMMUNITY_FILTERS } from '@/constants/filterConfig';

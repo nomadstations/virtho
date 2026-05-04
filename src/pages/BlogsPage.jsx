@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,7 +16,7 @@ import { getBlogs, getBlogCategories } from '@/data/mockBlogs';
 import { ROUTES } from '@/constants';
 
 function BlogsPage() {
-  const [viewMode, setViewMode] = useViewMode('virtho_blog_view_mode', 'grid');
+  const { viewMode, setViewMode } = useViewMode('grid');
   const { searchTerm, setSearchTerm } = useSearch('');
   
   // Filtering & Sorting State
